@@ -6,7 +6,7 @@ function table.reverse(a)
     return res
 end
 
-workspace "virtual-addressing"
+workspace "trive-universe"
 
   language "C++"
 
@@ -22,7 +22,8 @@ workspace "virtual-addressing"
 
   filter { "action:gmake*" }
     buildoptions {
-      "-Wall", "-std=c++11", "-Wextra", "-Wfloat-equal", "-Winline", "-Wundef", "-Werror", "--pedantic-errors", "-Wpedantic", "-pedantic",
+      "-Wall", "-std=c++11", "-Wextra", "-Wfloat-equal", "-Winline", "-Wundef",
+      "-Werror", "--pedantic-errors", "-Wpedantic", "-pedantic",
       "-fverbose-asm", "-Wint-to-pointer-cast", "-Wshadow", "-Wpointer-arith",
       "-Wcast-align", "-Wcast-qual", "-Wunreachable-code", "-Wstrict-overflow=5",
       "-Wwrite-strings", "-Wconversion", "--pedantic-errors",
@@ -57,9 +58,10 @@ workspace "virtual-addressing"
 
   filter {}
 
+  local lib_names = {"GL", "GLEW", "SDL2"}
   local proj_names = {}
 
-  for _, file in ipairs(os.matchfiles("src/raw/*.cpp")) do
+  for _, file in ipairs(os.matchfiles("src/lib/[^_]*.cpp")) do
     local basename = string.explode(file, "/")[3]
     local ident = string.explode(basename, "%.")[1]
     -- print("ident", ident)
@@ -74,7 +76,7 @@ workspace "virtual-addressing"
   end
   table.sort(proj_names)
 
-  local main_project = "virt_addr"
+  local main_project = "trive_engine"
   local base_links = table.merge(proj_names, { [#proj_names + 1] = main_project })
   for k, v in next, base_links do print(k, v) end
 
@@ -83,11 +85,13 @@ workspace "virtual-addressing"
 
     files { path.join("src", "example.cpp") }
     links ( base_links )
+    links ( lib_names )
 
   project(main_project)
     kind "staticlib"
     -- don't link main_project to itself
     links ( proj_names )
+    links ( lib_names )
 
   project "tests"
     kind "consoleapp"
@@ -100,7 +104,7 @@ workspace "virtual-addressing"
 
     links ( test_links )
 
-    targetname "test_vaddr"
+    targetname "test_trive"
 
   project "clobber"
     kind "makefile"
