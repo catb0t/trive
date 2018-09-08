@@ -4,28 +4,34 @@ auto main (const int argc, char* const * const argv) -> int {
   (void) argc;
   (void) argv;
 
-  std::printf("%s %s", trive::program_name, trive::program_version);
+  std::printf("%s %s\n", trive::program_name, trive::program_version);
 
   SDL_Window* main_window;
   SDL_GLContext main_context;
+  trive::graphics::shader::shader_t* shader_holder;
 
-  if ( ! trive::graphics::sdl_gl::init(&main_window, &main_context) ) {
+  if ( ! trive::graphics::init(&main_window, &main_context, &shader_holder) ) {
+    check_sdl_error();
     return EXIT_FAILURE;
   }
-  // Clear our buffer with a black background
-  // This is the same as :
-  //     SDL_SetRenderDrawColor(&renderer, 255, 0, 0, 255);
-  //     SDL_RenderClear(&renderer);
-  //
 
-  glClearColor(0.0, 0.0, 0.0, 1.0);
-  glClear(GL_COLOR_BUFFER_BIT);
-  SDL_GL_SwapWindow(main_window);
+  trive::graphics::black_window(&main_window);
 
-  trive::graphics::sdl_gl::setup_buffer_objects();
+  size_t vbo_len = 2, vao_len = 1;
+
+  auto* vbo_list = alloc(GLuint, vbo_len);
+  auto* vao_list = alloc(GLuint, vao_len);
+
+  static const uint32_t pos_attr_index = 0, color_attr_index = 1;
+
+  trive::graphics::setup_buffer_objects(&shader_holder, vbo_list, vbo_len, vao_list, vao_len, pos_attr_index, color_attr_index);
+  trive::graphics::render(&main_window, color_attr_index);
   // run_game();
 
-  trive::graphics::sdl_gl::cleanup(&main_window, &main_context);
+  trive::graphics::metadata::cleanup(&main_window, &main_context, &shader_holder, vbo_list, 1, vao_list, 1);
+
+  free(vao_list);
+  free(vbo_list);
 
   return EXIT_SUCCESS;
 }

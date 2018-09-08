@@ -58,7 +58,7 @@ workspace "trive-universe"
 
   filter {}
 
-  local lib_names = {"GL", "GLEW", "SDL2"}
+  local lib_names = {"epoxy", "glfw", "SDL2"}
   local proj_names = {}
 
   for _, file in ipairs(os.matchfiles("src/lib/[^_]*.cpp")) do
