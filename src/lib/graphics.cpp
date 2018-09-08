@@ -153,23 +153,27 @@ namespace trive {
       // Swap our buffers to make our changes visible
       SDL_GL_SwapWindow(*window);
 
-      //std::puts("Press ENTER to render next frame");
-      //(void) std::fgetc(stdin);
+      std::puts("Press ENTER to render next frame");
+      std::fgetc(stdin);
 
       // Second, enable the colors and draw a solid square
       // ===================
       // Enable our attribute within the current VAO
       glEnableVertexAttribArray(color_attrib_index);
 
-      // Make our background black
-      glClearColor(0.0, 0.0, 0.0, 0.0);
-      glClear(GL_COLOR_BUFFER_BIT);
+      black_window(window);
+      std::puts("Press ENTER to render next frame");
+      std::fgetc(stdin);      
 
       // Invoke glDrawArrays telling that our data is a line loop and we want to draw 2-4 vertexes
       glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
       // Swap our buffers to make our changes visible
       SDL_GL_SwapWindow(*window);
+
+      std::puts("Press ENTER to finish");
+      std::fgetc(stdin);
+
     }
 
     void black_window (SDL_Window* const * const window) {

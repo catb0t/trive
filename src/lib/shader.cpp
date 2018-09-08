@@ -4,49 +4,6 @@ namespace trive {
   namespace graphics {
     namespace shader {
 
-      static const char* const shader_source_vertex = R"(
-      #version 150
-
-      // in_Position was bound to attribute index 0 and in_Color was bound to attribute index 1
-      attribute vec3 in_Position;
-      attribute vec4 in_Color;
-
-      // We output the ex_Color variable to the next shader in the chain
-      out vec4 ex_Color;
-
-      void main(void) {
-          // Since we are using flat lines, our input only had two points: x and y.
-          // Set the Z coordinate to 0 and W coordinate to 1
-          gl_Position = vec4(in_Position.x, in_Position.y, in_Position.z, 1.0);
-
-          // Pass the color on to the fragment shader
-          ex_Color = in_Color;
-      }
-      )";
-
-      static const char* const shader_source_fragment = R"(
-      #version 120
-      // It was expressed that some drivers required this next line to function properly
-      precision highp float;
-
-      in  vec4 ex_Color;
-
-      void main(void) {
-          gl_FragColor = vec4(ex_Color);
-      }
-      )";
-
-      void shader_t::bind_attr_loc (const GLuint index, const char* const attribute) {
-        // Bind attribute index 0 (coordinates) to in_Position and attribute index 1 (color) to in_Color
-        // Attribute locations must be setup before calling glLinkProgram
-        glBindAttribLocation(this->shader_program, index, attribute);
-      }
-
-      void shader_t::use_program (void) {
-        // Load the shader into the rendering pipeline
-        glUseProgram(this->shader_program);
-      }
-
       shader_t::shader_t (void) noexcept {
         // Generate our shader. This is similar to glGenBuffers() and glGenVertexArray(), except that this returns the ID
         this->shader_program = glCreateProgram();
@@ -67,16 +24,66 @@ namespace trive {
         }
       }
 
-      bool shader_t::load_vertex_shader (void) {
-        std::puts("Linking Vertex shader");
+      char* shader_t::read_shader_file (const char* const filename) {
 
-        const GLint vert_len = static_cast<GLint> ( strnlen(shader_source_vertex, max_shader_len) );
+        struct stat file_info;
+
+        if ( -1 == stat(filename, &file_info) ) {
+          char *errno_str = strerror(errno);
+          std::fprintf(stderr, "%s: %s: %s\n", __func__, filename, errno_str);
+          return nullptr;
+        }
+
+        FILE* shader_fp = std::fopen(filename, "r");
+
+        char* shader_contents = alloc(char, max_shader_len);
+
+        if (nullptr != shader_fp) {
+          size_t new_len = std::fread(shader_contents, nbytes(char, 1), max_shader_len, shader_fp);
+          if (0 == new_len) {
+            char *errno_str = strerror(errno);
+            std::fprintf(stderr, "%s: %s: %s\n", __func__, filename, errno_str);
+            return nullptr;
+          } else {
+            shader_contents[ new_len ] = '\0'; /* Just to be safe. */
+          }
+
+          std::fclose(shader_fp);
+        }
+
+        return shader_contents;
+      }
+
+      void shader_t::use_program (void) {
+        // Load the shader into the rendering pipeline
+        glUseProgram(this->shader_program);
+      }
+
+      void shader_t::bind_attr_loc (const GLuint index, const char* const attribute) {
+        // Bind attribute index 0 (coordinates) to in_Position and attribute index 1 (color) to in_Color
+        // Attribute locations must be setup before calling glLinkProgram
+        glBindAttribLocation(this->shader_program, index, attribute);
+      }
+
+
+      bool shader_t::load_vertex_shader (void) {
+        std::puts("Loading Vertex shader");
+
+        char* vertex_source = this->read_shader_file("src/shader/shader1.vert");
+
+        if (nullptr == vertex_source) {
+          return false;
+        }
+
+        const GLint vert_len = static_cast<GLint> ( strnlen(vertex_source, max_shader_len) );
 
         // Create an empty vertex shader handle
         this->vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 
         // Send the vertex shader source code to OpenGL
-        glShaderSource(this->vertex_shader, 1, &shader_source_vertex, &vert_len);
+        glShaderSource(this->vertex_shader, 1, &vertex_source, &vert_len);
+
+        std::free(vertex_source);
 
         // Compile the vertex shader
         glCompileShader(this->vertex_shader);
@@ -96,13 +103,21 @@ namespace trive {
       bool shader_t::load_fragment_shader (void) {
         std::puts("Loading Fragment Shader");
 
-        const GLint frag_len = static_cast<GLint> ( strnlen(shader_source_fragment, max_shader_len) );
+        char* fragment_source = this->read_shader_file("src/shader/frag1.frag");
+
+        if (nullptr == fragment_source) {
+          return false;
+        }
+
+        const GLint frag_len = static_cast<GLint> ( strnlen(fragment_source, max_shader_len) );
 
         // Create an empty vertex shader handle
         this->fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
 
         // Send the vertex shader source code to OpenGL
-        glShaderSource(this->fragment_shader, 1, &shader_source_fragment, &frag_len);
+        glShaderSource(this->fragment_shader, 1, &fragment_source, &frag_len);
+
+        std::free(fragment_source);
 
         // Compile the vertex shader
         glCompileShader(this->fragment_shader);

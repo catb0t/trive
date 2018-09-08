@@ -3,6 +3,7 @@
 
 #include <cstring>
 #include <cstdio>
+#include <cerrno>
 #include <sys/stat.h>
 
 #define GL4_PROTOTYPES 1 // does this do anything?
@@ -59,6 +60,7 @@ namespace trive {
     namespace shader {
       class shader_t {
         public:
+          //char* vertex_source = nullptr, fragment_source = nullptr;
           static const size_t max_shader_len = 4000;
 
           // The handle to our shader program
@@ -69,9 +71,10 @@ namespace trive {
 
           int status = 2; // 0 = false, 1 = true, 2 = unset
 
-          void bind_attr_loc (const GLuint index, const char* const attribute);
-          void use_program (void);
           shader_t (void) noexcept;
+          char* read_shader_file (const char* const filename);
+          void use_program (void);
+          void bind_attr_loc (const GLuint index, const char* const attribute);
           bool load_vertex_shader (void);
           bool load_fragment_shader (void);
           bool link_shaders (void);
