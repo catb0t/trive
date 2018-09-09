@@ -150,11 +150,11 @@ namespace trive {
       // Invoke glDrawArrays telling that our data is a line loop and we want to draw 2-4 vertexes
       glDrawArrays(GL_LINE_LOOP, 0, 4);
 
-      // Swap our buffers to make our changes visible
-      SDL_GL_SwapWindow(*window);
-
       std::puts("Press ENTER to render next frame");
       std::fgetc(stdin);
+
+      // Swap our buffers to make our changes visible
+      SDL_GL_SwapWindow(*window);
 
       // Second, enable the colors and draw a solid square
       // ===================
@@ -163,7 +163,7 @@ namespace trive {
 
       black_window(window);
       std::puts("Press ENTER to render next frame");
-      std::fgetc(stdin);      
+      std::fgetc(stdin);
 
       // Invoke glDrawArrays telling that our data is a line loop and we want to draw 2-4 vertexes
       glDrawArrays(GL_TRIANGLE_FAN, 0, 4);

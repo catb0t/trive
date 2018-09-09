@@ -12,7 +12,9 @@ namespace trive {
         bind_attr_loc(0, "in_Position");
         bind_attr_loc(1, "in_Color");
 
-        if ( ! load_vertex_shader() || ! load_fragment_shader() ) {
+        this->shader_ids = new std::vector<GLuint>();
+
+        if ( ! this->load_shader("src/shader/vert.vert", GL_VERTEX_SHADER) || ! this->load_shader("src/shader/frag.frag", GL_FRAGMENT_SHADER) || ! this->load_shader("src/shader/geom.geom", GL_GEOMETRY_SHADER) ) { // ! load_vertex_shader() || ! load_fragment_shader() ) {
           this->status = 0;
           //return nullptr;
         }
@@ -65,7 +67,7 @@ namespace trive {
         glBindAttribLocation(this->shader_program, index, attribute);
       }
 
-
+/*
       bool shader_t::load_vertex_shader (void) {
         std::puts("Loading Vertex shader");
 
@@ -133,6 +135,52 @@ namespace trive {
         glAttachShader(this->shader_program, this->fragment_shader);
         return true;
       }
+*/
+      bool shader_t::load_shader (const char* const filename, const GLenum shader_type) {
+        std::printf("Loading shader : %s\n", filename);
+
+        const GLuint shader_id = this->create_shader(filename, shader_type);
+
+        if ( this->try_compile_shader(shader_id) ) {
+          glAttachShader(this->shader_program, shader_id);
+          this->shader_ids->push_back(shader_id);
+
+          return true;
+        }
+
+        return false;
+      }
+
+      bool shader_t::try_compile_shader (const GLuint shader_id) {
+        // Compile the vertex shader
+        glCompileShader(shader_id);
+
+        // Ask OpenGL if the shaders was compiled
+        GLint wasCompiled = false;
+        glGetShaderiv(shader_id, GL_COMPILE_STATUS, &wasCompiled);
+
+        if (! wasCompiled) {
+          shader_compile_error(shader_id);
+          return false;
+        }
+
+        // Return false if compilation failed
+        return (wasCompiled != 0);
+
+      }
+
+      GLuint shader_t::create_shader (const char* const filename, const GLenum shader_type) {
+          char* const shader_source = this->read_shader_file(filename);
+
+          GLint shader_len = static_cast<GLint> (strnlen(shader_source, max_shader_len));
+
+          const GLuint shader_id = glCreateShader(shader_type);
+
+          glShaderSource(shader_id , 1, &shader_source, &shader_len);
+          free(shader_source);
+
+          return shader_id;
+      }
 
       bool shader_t::link_shaders (void) {
         // Link. At this point, our shaders will be inspected/optized and the binary code generated
@@ -187,16 +235,21 @@ namespace trive {
         free(shader_info_log);
       }
 
-      void shader_t::cleanup (void) {
-        /* Cleanup all the things we bound and allocated */
+      shader_t::~shader_t (void) noexcept {
+
         glUseProgram(0);
-        glDetachShader(this->shader_program, this->vertex_shader);
-        glDetachShader(this->shader_program, this->fragment_shader);
+
+        for (auto shi: *(this->shader_ids)) {
+          glDetachShader(this->shader_program, shi);
+        }
 
         glDeleteProgram(this->shader_program);
 
-        glDeleteShader(this->vertex_shader);
-        glDeleteShader(this->fragment_shader);
+        for (auto shi: *(this->shader_ids)) {
+          glDeleteShader(shi);
+        }
+
+        delete this->shader_ids;
       }
     }
   }

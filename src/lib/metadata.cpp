@@ -32,7 +32,6 @@ namespace trive {
       }
 
       void cleanup (SDL_Window* * const window, SDL_GLContext* const context, shader::shader_t* * const shader_holder, GLuint* const vbo_list, const size_t count_vbo, GLuint* const vao_list, const size_t count_vao) {
-        (*shader_holder)->cleanup();
         delete *shader_holder;
 
         glDisableVertexAttribArray(0);
